@@ -128,8 +128,9 @@ class Clearquest(Table):
     
     def extract_params(self):
         params_dict = {}
-        params_list = self.options.get("params", "").split(",")
-        for p in params_list:
-            p_name, p_value = p.split("=")
-            params_dict[p_name.strip()] = p_value.strip()
+        params = self.options.get("params")
+        if params:
+            for p in params.split(","):
+                p_name, p_value = p.split("=")
+                params_dict[p_name.strip()] = p_value.strip()
         return params_dict
