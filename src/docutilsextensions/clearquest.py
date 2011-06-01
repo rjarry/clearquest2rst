@@ -8,6 +8,8 @@ from docutils.parsers.rst import directives, DirectiveError
 from docutils import statemachine, nodes
 
 import win32com.client as COM
+import re
+SUBST_REF_REX = re.compile(r'\|(.+?)\|', re.DOTALL)
 
 class Clearquest(Table):
     option_spec = {
@@ -30,6 +32,7 @@ class Clearquest(Table):
 
     def run(self):
         try:
+            self.resolve_substitutions_refs()
             session = self.open_clearquest_session(username=self.options.get("username", ""), 
                                                    password=self.options.get("password", ""), 
                                                    db_name=self.options.get("db_name", ""), 
@@ -107,12 +110,12 @@ class Clearquest(Table):
         
         nbcol = resultset.GetNumberOfColumns - 1 # this is silly, but first column is reserved
     
-        if status == 1:
-            columns = [ resultset.GetColumnLabel(i) for i in range(2, nbcol + 2) ]
-        else:
-            raise self.error("No results from ClearQuest query '%s'..." % queryname)
-    
         records = []
+        columns = [ fieldDef.Label for fieldDef in query.QueryFieldDefs ][1:]
+        
+        if status != 1:
+            # No results from ClearQuest query, we fill one line with dashes
+            records.append(list("-" * len(columns)))
     
         while status == 1:
             records.append([ resultset.GetColumnValue(i) for i in range(2, nbcol + 2) ])
@@ -134,3 +137,12 @@ class Clearquest(Table):
                 p_name, p_value = p.split("=")
                 params_dict[p_name.strip()] = p_value.strip()
         return params_dict
+
+    def resolve_substitutions_refs(self):
+        def _subst_ref_match(match):
+            return self.state.document.substitution_defs[match.group(1)].astext()
+        
+        for opt_name in self.options.keys():
+            opt_val = unicode(self.options[opt_name])
+            opt_val, _ = SUBST_REF_REX.subn(_subst_ref_match, opt_val)
+            self.options[opt_name] = opt_val
