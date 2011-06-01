@@ -107,12 +107,12 @@ class Clearquest(Table):
         
         nbcol = resultset.GetNumberOfColumns - 1 # this is silly, but first column is reserved
     
-        if status == 1:
-            columns = [ resultset.GetColumnLabel(i) for i in range(2, nbcol + 2) ]
-        else:
-            raise self.error("No results from ClearQuest query '%s'..." % queryname)
-    
         records = []
+        columns = [ fieldDef.Label for fieldDef in query.QueryFieldDefs ][1:]
+        
+        if status != 1:
+            # No results from ClearQuest query, we fill one line with dashes
+            records.append(list("-" * len(columns)))
     
         while status == 1:
             records.append([ resultset.GetColumnValue(i) for i in range(2, nbcol + 2) ])

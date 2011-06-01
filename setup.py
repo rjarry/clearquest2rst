@@ -2,7 +2,7 @@
 from distutils.core import setup
 setup(
     name = "clearquest2rst",
-    version = "0.1.1",
+    version = "0.1.2",
     license = "MIT",
     requires = ["docutils (>=0.7)", "docutilsextensions (>=0.1.0)"],
 
